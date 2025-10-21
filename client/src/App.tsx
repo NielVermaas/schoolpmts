@@ -21,7 +21,7 @@ import AdminSettings from './pages/admin/Settings';
 
 function App() {
   // AUTHENTICATION DISABLED FOR TESTING
-  // All users default to parent view
+  // All users default to admin view for school management
 
   return (
     <Router>
@@ -45,9 +45,9 @@ function App() {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        {/* Redirect to parent portal by default */}
-        <Route path="/" element={<Navigate to="/parent" replace />} />
-        <Route path="/auth/*" element={<Navigate to="/parent" replace />} />
+        {/* Redirect to admin portal by default */}
+        <Route path="/" element={<Navigate to="/admin" replace />} />
+        <Route path="/auth/*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </Router>
   );
