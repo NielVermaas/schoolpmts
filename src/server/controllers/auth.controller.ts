@@ -58,7 +58,7 @@ export class AuthController {
     }
   };
 
-  logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  logout = async (_req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       // Token invalidation logic can be added here if needed
       res.json({
