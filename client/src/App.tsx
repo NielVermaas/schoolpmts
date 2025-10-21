@@ -1,14 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
 
 // Layouts
 import ParentLayout from './layouts/ParentLayout';
 import AdminLayout from './layouts/AdminLayout';
-import AuthLayout from './layouts/AuthLayout';
-
-// Auth pages
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
 
 // Parent pages
 import ParentDashboard from './pages/parent/Dashboard';
@@ -26,38 +20,14 @@ import AdminPayouts from './pages/admin/Payouts';
 import AdminSettings from './pages/admin/Settings';
 
 function App() {
-  const { user, isAuthenticated } = useAuthStore();
-
-  const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?: string[] }) => {
-    if (!isAuthenticated) {
-      return <Navigate to="/auth/login" replace />;
-    }
-
-    if (roles && user && !roles.includes(user.role)) {
-      return <Navigate to="/" replace />;
-    }
-
-    return <>{children}</>;
-  };
+  // AUTHENTICATION DISABLED FOR TESTING
+  // All users default to parent view
 
   return (
     <Router>
       <Routes>
-        {/* Auth routes */}
-        <Route path="/auth" element={<AuthLayout />}>
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-        </Route>
-
-        {/* Parent routes */}
-        <Route
-          path="/parent"
-          element={
-            <ProtectedRoute roles={['PARENT']}>
-              <ParentLayout />
-            </ProtectedRoute>
-          }
-        >
+        {/* Parent routes - default view */}
+        <Route path="/parent" element={<ParentLayout />}>
           <Route index element={<ParentDashboard />} />
           <Route path="invoices" element={<ParentInvoices />} />
           <Route path="invoices/:id" element={<ParentInvoiceDetail />} />
@@ -66,14 +36,7 @@ function App() {
         </Route>
 
         {/* Admin routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute roles={['SUPER_ADMIN', 'SCHOOL_ADMIN']}>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="families" element={<AdminFamilies />} />
           <Route path="invoices" element={<AdminInvoices />} />
@@ -82,21 +45,9 @@ function App() {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        {/* Redirect based on role */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              user?.role === 'PARENT' ? (
-                <Navigate to="/parent" replace />
-              ) : (
-                <Navigate to="/admin" replace />
-              )
-            ) : (
-              <Navigate to="/auth/login" replace />
-            )
-          }
-        />
+        {/* Redirect to parent portal by default */}
+        <Route path="/" element={<Navigate to="/parent" replace />} />
+        <Route path="/auth/*" element={<Navigate to="/parent" replace />} />
       </Routes>
     </Router>
   );
