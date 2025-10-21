@@ -1,0 +1,356 @@
+// Prisma schema for School Fee Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// School entity with branding configuration
+model School {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  address       String?
+  logoUrl       String?
+  primaryColor  String   @default("#1e40af")
+  secondaryColor String  @default("#60a5fa")
+
+  // Banking details for payouts
+  bankName      String?
+  accountNumber String?
+  branchCode    String?
+  accountHolder String?
+
+  // Netcash configuration
+  netcashServiceKey String?
+  netcashMerchantId String?
+
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  families      Family[]
+  invoices      Invoice[]
+  payouts       Payout[]
+
+  @@index([email])
+}
+
+// User roles: ADMIN, SCHOOL_ADMIN, PARENT
+enum UserRole {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  PARENT
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole @default(PARENT)
+
+  schoolId      String?
+  school        School?  @relation(fields: [schoolId], references: [id])
+
+  familyId      String?  @unique
+  family        Family?  @relation(fields: [familyId], references: [id])
+
+  active        Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+  @@index([schoolId])
+}
+
+model Family {
+  id             String   @id @default(uuid())
+  schoolId       String
+  school         School   @relation(fields: [schoolId], references: [id])
+
+  primaryContact String
+  secondaryContact String?
+  email          String
+  phone          String?
+  address        String?
+
+  // For split billing
+  billingEmails  String[] // Additional email addresses for statements
+
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User?
+  students       Student[]
+  invoices       Invoice[]
+  payments       Payment[]
+
+  @@index([schoolId])
+  @@index([email])
+}
+
+model Student {
+  id           String   @id @default(uuid())
+  familyId     String
+  family       Family   @relation(fields: [familyId], references: [id])
+
+  firstName    String
+  lastName     String
+  grade        String
+  studentId    String   // School-specific student ID
+
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoiceItems InvoiceItem[]
+
+  @@unique([familyId, studentId])
+  @@index([familyId])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  invoiceNumber   String        @unique
+
+  schoolId        String
+  school          School        @relation(fields: [schoolId], references: [id])
+
+  familyId        String
+  family          Family        @relation(fields: [familyId], references: [id])
+
+  // Invoice details
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  status          InvoiceStatus @default(DRAFT)
+
+  // Amounts in cents
+  subtotal        Int
+  tax             Int           @default(0)
+  total           Int
+  amountPaid      Int           @default(0)
+  amountDue       Int
+
+  // Payment plan support
+  isPaymentPlan   Boolean       @default(false)
+  paymentPlanId   String?
+  paymentPlan     PaymentPlan?  @relation(fields: [paymentPlanId], references: [id])
+
+  notes           String?
+  sentAt          DateTime?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items           InvoiceItem[]
+  payments        Payment[]
+
+  @@index([schoolId])
+  @@index([familyId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+enum InvoiceItemType {
+  TUITION
+  BOOKS
+  UNIFORM
+  TRANSPORT
+  MEALS
+  EXTRACURRICULAR
+  OTHER
+}
+
+model InvoiceItem {
+  id          String          @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  studentId   String?
+  student     Student?        @relation(fields: [studentId], references: [id])
+
+  type        InvoiceItemType
+  description String
+  quantity    Int             @default(1)
+  unitPrice   Int             // in cents
+  amount      Int             // in cents (quantity * unitPrice)
+
+  createdAt   DateTime        @default(now())
+
+  @@index([invoiceId])
+  @@index([studentId])
+}
+
+model PaymentPlan {
+  id              String    @id @default(uuid())
+  name            String
+  totalAmount     Int       // in cents
+  numberOfPayments Int
+  frequency       String    // MONTHLY, QUARTERLY, etc.
+
+  startDate       DateTime
+  endDate         DateTime
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  invoices        Invoice[]
+  installments    PaymentInstallment[]
+}
+
+model PaymentInstallment {
+  id              String      @id @default(uuid())
+  paymentPlanId   String
+  paymentPlan     PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+
+  installmentNumber Int
+  dueDate         DateTime
+  amount          Int         // in cents
+  isPaid          Boolean     @default(false)
+  paidAt          DateTime?
+
+  createdAt       DateTime    @default(now())
+
+  @@index([paymentPlanId])
+  @@index([dueDate])
+}
+
+enum PaymentMethod {
+  CARD
+  INSTANT_EFT
+  QR_CODE
+  DEBICHECK
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  paymentReference String       @unique
+
+  familyId        String
+  family          Family        @relation(fields: [familyId], references: [id])
+
+  invoiceId       String?
+  invoice         Invoice?      @relation(fields: [invoiceId], references: [id])
+
+  // Payment details
+  amount          Int           // in cents
+  currency        String        @default("ZAR")
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+
+  // Netcash integration
+  netcashTransactionId String?  @unique
+  netcashRequestId     String?
+  netcashPaymentUrl    String?
+
+  // Card details (masked)
+  cardMasked      String?
+  cardType        String?
+
+  // Reconciliation
+  reconciled      Boolean       @default(false)
+  reconciledAt    DateTime?
+  reconciledBy    String?
+
+  // Metadata
+  payerName       String?
+  payerEmail      String?
+  notes           String?
+
+  failureReason   String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  completedAt     DateTime?
+
+  @@index([familyId])
+  @@index([invoiceId])
+  @@index([status])
+  @@index([reconciled])
+  @@index([createdAt])
+}
+
+enum PayoutStatus {
+  PENDING
+  SCHEDULED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Payout {
+  id              String       @id @default(uuid())
+  schoolId        String
+  school          School       @relation(fields: [schoolId], references: [id])
+
+  // Payout details
+  amount          Int          // in cents
+  currency        String       @default("ZAR")
+  status          PayoutStatus @default(PENDING)
+
+  scheduledDate   DateTime
+  completedDate   DateTime?
+
+  // Payment references included
+  paymentIds      String[]
+
+  // Banking
+  bankReference   String?
+  transactionId   String?
+
+  notes           String?
+  failureReason   String?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([schoolId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+// Audit log for important actions
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String
+  changes     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityId])
+  @@index([createdAt])
+}
