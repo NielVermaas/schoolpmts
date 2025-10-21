@@ -1,5 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Users, UserPlus } from 'lucide-react';
+
+// Generate default pricing: Grade 1 = R1000, each grade 10% more
+const generateDefaultPricing = () => {
+  const grades = [];
+  let basePrice = 100000; // R1000 in cents
+
+  for (let i = 1; i <= 12; i++) {
+    grades.push({
+      grade: `Grade ${i}`,
+      monthlyFee: Math.round(basePrice)
+    });
+    basePrice = basePrice * 1.1; // 10% increase
+  }
+
+  return grades;
+};
 
 interface Student {
   id: string;
@@ -22,6 +38,13 @@ export default function AdminFamilies() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState<string | null>(null);
+  const [gradePricing, setGradePricing] = useState<any[]>([]);
+
+  // Load grade pricing from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('gradePricing');
+    setGradePricing(saved ? JSON.parse(saved) : generateDefaultPricing());
+  }, []);
 
   const [newFamily, setNewFamily] = useState({
     primaryContact: '',
@@ -191,14 +214,24 @@ export default function AdminFamilies() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Grade/Year
                 </label>
-                <input
-                  type="text"
+                <select
                   required
                   value={newStudent.grade}
                   onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="e.g., Grade 5, Year 10"
-                />
+                >
+                  <option value="">Select a grade...</option>
+                  {gradePricing.map((pricing) => (
+                    <option key={pricing.grade} value={pricing.grade}>
+                      {pricing.grade} - R{(pricing.monthlyFee / 100).toFixed(2)}/month
+                    </option>
+                  ))}
+                </select>
+                {newStudent.grade && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Monthly fee: R{(gradePricing.find(p => p.grade === newStudent.grade)?.monthlyFee / 100 || 0).toFixed(2)}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
