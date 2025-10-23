@@ -13,6 +13,7 @@ import ParentProfile from './pages/parent/Profile';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminSchools from './pages/admin/Schools';
 import AdminFamilies from './pages/admin/Families';
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPayments from './pages/admin/Payments';
@@ -38,6 +39,7 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
+          <Route path="schools" element={<AdminSchools />} />
           <Route path="families" element={<AdminFamilies />} />
           <Route path="invoices" element={<AdminInvoices />} />
           <Route path="payments" element={<AdminPayments />} />

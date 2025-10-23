@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, FileText, CreditCard, DollarSign, Settings, LogOut } from 'lucide-react';
+import { Home, Users, School, FileText, CreditCard, DollarSign, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 export default function AdminLayout() {
@@ -8,6 +8,7 @@ export default function AdminLayout() {
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: Home },
+    { name: 'Schools', href: '/admin/schools', icon: School },
     { name: 'Families', href: '/admin/families', icon: Users },
     { name: 'Invoices', href: '/admin/invoices', icon: FileText },
     { name: 'Payments', href: '/admin/payments', icon: CreditCard },

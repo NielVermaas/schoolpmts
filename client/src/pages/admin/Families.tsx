@@ -141,7 +141,7 @@ export default function AdminFamilies() {
           <SchoolIcon className="w-12 h-12 mx-auto mb-3 text-yellow-600" />
           <p className="text-yellow-800 font-medium mb-2">No School Selected</p>
           <p className="text-yellow-700 text-sm">
-            Please go to Settings and select a school before adding families.
+            Please go to Schools and select a school before adding families.
           </p>
         </div>
       )}
