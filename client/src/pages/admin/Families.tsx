@@ -35,7 +35,11 @@ interface Family {
 }
 
 export default function AdminFamilies() {
-  const [families, setFamilies] = useState<Family[]>([]);
+  const [families, setFamilies] = useState<Family[]>(() => {
+    // Load families from localStorage on initial render
+    const saved = localStorage.getItem('families');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState<string | null>(null);
   const [gradePricing, setGradePricing] = useState<any[]>([]);
@@ -45,6 +49,11 @@ export default function AdminFamilies() {
     const saved = localStorage.getItem('gradePricing');
     setGradePricing(saved ? JSON.parse(saved) : generateDefaultPricing());
   }, []);
+
+  // Save families to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('families', JSON.stringify(families));
+  }, [families]);
 
   const [newFamily, setNewFamily] = useState({
     primaryContact: '',
