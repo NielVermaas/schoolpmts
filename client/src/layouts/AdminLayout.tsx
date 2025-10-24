@@ -21,17 +21,22 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200">
+      <div className="fixed inset-y-0 left-0 w-72 bg-gradient-dark shadow-soft-xl">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-primary-600">School Admin</h1>
+          <div className="flex items-center justify-center h-20 px-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                <Home className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-white">SchoolPay</h1>
+            </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-4 py-8 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
@@ -41,13 +46,16 @@ export default function AdminLayout() {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                    'group flex items-center px-4 py-3.5 text-sm font-semibold rounded-xl transition-all duration-200',
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gradient-primary text-white shadow-lg shadow-primary-500/30 scale-105'
+                      : 'text-gray-300 hover:bg-white/10 hover:text-white hover:scale-105'
                   )}
                 >
-                  <Icon className="w-5 h-5 mr-3" />
+                  <Icon className={cn(
+                    "w-5 h-5 mr-3 transition-transform duration-200",
+                    isActive ? "scale-110" : "group-hover:scale-110"
+                  )} />
                   {item.name}
                 </Link>
               );
@@ -55,17 +63,25 @@ export default function AdminLayout() {
           </nav>
 
           {/* User info */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 mx-4 mb-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role.toLowerCase().replace('_', ' ')}</p>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-accent rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Admin User
+                  </p>
+                  <p className="text-xs text-gray-400">Test Mode</p>
+                </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                title="Logout"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -75,9 +91,11 @@ export default function AdminLayout() {
       </div>
 
       {/* Main content */}
-      <div className="pl-64">
-        <main className="p-8">
-          <Outlet />
+      <div className="pl-72">
+        <main className="p-8 min-h-screen">
+          <div className="animate-fade-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
